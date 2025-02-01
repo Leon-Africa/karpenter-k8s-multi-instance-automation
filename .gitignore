@@ -1,0 +1,29 @@
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+.terraform.lock.hcl
+
+# Terraform variable definitions
+*.tfvars
+!terraform.tfvars.example
+
+# Ansible
+*.retry
+*.log
+__pycache__/
+
+# Node / Editor
+node_modules/
+*.swp
+.DS_Store
+
+# OS files
+Thumbs.db
