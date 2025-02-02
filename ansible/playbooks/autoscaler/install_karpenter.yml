@@ -1,0 +1,6 @@
+- name: Install Karpenter on EKS
+  hosts: localhost
+  gather_facts: no
+  become: false 
+  roles:
+    - karpenter

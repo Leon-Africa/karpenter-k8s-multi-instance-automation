@@ -1,0 +1,15 @@
+plugin: amazon.aws.aws_ec2
+regions:
+  - us-west-2   # Change to your region
+filters:
+  "tag:eks:cluster-name": "my-eks-cluster"  # Ensure Karpenter provisions nodes with this tag
+boto_profile: default
+keyed_groups:
+  - key: tags.Name
+    separator: ""
+hostnames:
+  - instance-id
+compose:
+  ansible_connection: "aws_ssm"
+  ansible_aws_ssm_region: "us-west-2"  # Change to your region
+  ansible_aws_ssm_profile: "default"

@@ -1,0 +1,5 @@
+cluster_name: "karpenter-k8s"
+karpenter_version: "v0.32.10"
+aws_region: "us-west-1" 
+amd_ami_id: "ami-07d2649d67dbe8900"
+arm_ami_id: "ami-0e429563766e13da0"

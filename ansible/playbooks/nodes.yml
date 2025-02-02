@@ -1,0 +1,8 @@
+---
+- name: Perform Node-Level Configuration via SSM
+  hosts: all
+  become: yes
+  gather_facts: no
+  tasks:
+    - name: Ping worker node via SSM
+      ping:

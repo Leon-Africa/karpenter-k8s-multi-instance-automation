@@ -1,0 +1,103 @@
+- name: Ensure Helm is installed
+  command: helm version
+  become: false 
+  register: helm_installed
+  ignore_errors: yes
+
+- name: Install Helm if not present
+  shell: curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+  become: false 
+  when: helm_installed is failed
+
+- name: Fetch AWS Account ID
+  amazon.aws.aws_caller_info:
+  register: caller_info
+
+- name: Set AWS Account ID
+  set_fact:
+    aws_account_id: "{{ caller_info.account }}"
+
+- name: Fetch Cluster Endpoint
+  shell: aws eks describe-cluster --name {{ cluster_name }} --region {{ aws_region }} --query "cluster.endpoint" --output text
+  register: cluster_endpoint
+
+- name: Create Karpenter Namespace
+  shell: kubectl create namespace karpenter --dry-run=client -o yaml | kubectl apply -f -
+
+- name: Install Karpenter via Helm
+  shell: |
+    helm upgrade --install karpenter oci://public.ecr.aws/karpenter/karpenter \
+      --version "{{ karpenter_version }}" \
+      --namespace karpenter --create-namespace \
+      --set "serviceAccount.annotations.eks\.amazonaws\.com/role-arn=arn:aws:iam::{{ aws_account_id }}:role/{{ cluster_name }}-karpenter" \
+      --set "settings.clusterName={{ cluster_name }}" \
+      --set "settings.interruptionQueue={{ cluster_name }}-karpenter-interruption-queue" \
+      --set "webhook.enabled=false" \
+      --set controller.resources.requests.cpu=1 \
+      --set controller.resources.requests.memory=1Gi \
+      --set controller.resources.limits.cpu=1 \
+      --set controller.resources.limits.memory=1Gi \
+      --wait
+
+- name: Apply Karpenter NodePool Configuration
+  copy:
+    dest: "/tmp/karpenter-nodepool.yaml"
+    content: |
+      apiVersion: karpenter.sh/v1beta1
+      kind: NodePool
+      metadata:
+        name: default
+        namespace: karpenter
+      spec:
+        template:
+          spec:
+            requirements:
+              - key: kubernetes.io/arch
+                operator: In
+                values: ["amd64", "arm64"]
+              - key: kubernetes.io/os
+                operator: In
+                values: ["linux"]
+              - key: karpenter.k8s.aws/instance-category
+                operator: In
+                values: ["c", "m", "r"]
+              - key: karpenter.k8s.aws/instance-generation
+                operator: Gt
+                values: ["2"]
+            nodeClassRef:
+              apiVersion: karpenter.k8s.aws/v1beta1
+              kind: EC2NodeClass
+              name: default
+        limits:
+          cpu: 1000
+        disruption:
+          consolidationPolicy: WhenUnderutilized
+  register: nodepool_config
+
+- name: Apply NodePool Configuration
+  shell: kubectl apply -f /tmp/karpenter-nodepool.yaml
+
+- name: Apply EC2NodeClass Configuration
+  copy:
+    dest: "/tmp/karpenter-ec2nodeclass.yaml"
+    content: |
+      apiVersion: karpenter.k8s.aws/v1beta1
+      kind: EC2NodeClass
+      metadata:
+        name: default
+      spec:
+        amiFamily: AL2
+        role: "KarpenterNodeRole-{{ cluster_name }}"
+        subnetSelectorTerms:
+          - tags:
+              karpenter.sh/discovery: "{{ cluster_name }}"
+        securityGroupSelectorTerms:
+          - tags:
+              karpenter.sh/discovery: "{{ cluster_name }}"
+        amiSelectorTerms:
+          - id: "{{ arm_ami_id }}"
+          - id: "{{ amd_ami_id }}"
+  register: ec2_nodeclass
+
+- name: Apply EC2NodeClass
+  shell: kubectl apply -f /tmp/karpenter-ec2nodeclass.yaml
