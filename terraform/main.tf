@@ -51,7 +51,7 @@ module "eks" {
     bootstrap = {
       desired_capacity = 2
       min_size        = 1
-      max_size        = 10
+      max_size        = 7
       instance_types  = ["m5.large"]
     }
   }
