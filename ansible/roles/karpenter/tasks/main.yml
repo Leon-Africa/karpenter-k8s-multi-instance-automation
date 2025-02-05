@@ -9,6 +9,21 @@
   become: false 
   when: helm_installed is failed
 
+# - name: Logout of helm registry to perform an unauthenticated pull against the public ECR
+#   shell: helm registry logout public.ecr.aws
+#   become: false 
+
+- name: Log in to public ECR OCI registry for Helm OCI access
+  shell: helm registry login public.ecr.aws --username AWS --password $(aws ecr-public get-login-password --region us-east-1)
+  become: false 
+  environment:
+    AWS_PROFILE: "{{ aws_profile | default('default') }}"
+  register: helm_login
+  changed_when: false
+  
+- name: Update kubeconfig for EKS cluster
+  shell: aws eks update-kubeconfig --name {{ cluster_name }} --region {{ aws_region }}
+
 - name: Fetch AWS Account ID
   amazon.aws.aws_caller_info:
   register: caller_info
@@ -24,6 +39,21 @@
 - name: Create Karpenter Namespace
   shell: kubectl create namespace karpenter --dry-run=client -o yaml | kubectl apply -f -
 
+# - name: Install Karpenter via Helm
+#   shell: |
+#     helm upgrade --install karpenter oci://public.ecr.aws/karpenter/karpenter \
+#       --version "{{ karpenter_version }}" \
+#       --namespace karpenter --create-namespace \
+#       --set "serviceAccount.annotations.eks\.amazonaws\.com/role-arn=arn:aws:iam::{{ aws_account_id }}:role/{{ cluster_name }}-karpenter" \
+#       --set "settings.clusterName={{ cluster_name }}" \
+#       --set "settings.interruptionQueue={{ cluster_name }}-karpenter-interruption-queue" \
+#       --set "webhook.enabled=false" \
+#       --set controller.resources.requests.cpu=1 \
+#       --set controller.resources.requests.memory=1Gi \
+#       --set controller.resources.limits.cpu=1 \
+#       --set controller.resources.limits.memory=1Gi \
+#       --wait
+
 - name: Install Karpenter via Helm
   shell: |
     helm upgrade --install karpenter oci://public.ecr.aws/karpenter/karpenter \
@@ -33,10 +63,6 @@
       --set "settings.clusterName={{ cluster_name }}" \
       --set "settings.interruptionQueue={{ cluster_name }}-karpenter-interruption-queue" \
       --set "webhook.enabled=false" \
-      --set controller.resources.requests.cpu=1 \
-      --set controller.resources.requests.memory=1Gi \
-      --set controller.resources.limits.cpu=1 \
-      --set controller.resources.limits.memory=1Gi \
       --wait
 
 - name: Apply Karpenter NodePool Configuration
