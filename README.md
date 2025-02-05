@@ -7,6 +7,13 @@
 - [boto3 and botocore](https://www.learnaws.org/2022/08/21/boto3-vs-botocore/): ````python3 -m pip install --user boto3 botocore````
 - [make](https://www.gnu.org/software/make/)
 
+
+# VPC Requirements
+Your vpc needs to be setup according to https://docs.aws.amazon.com/eks/latest/userguide/network-reqs.html
+
+create a ````terraform.tfvars```` filling the neccesary details following the structure in ````terrafrom.tfvars.example````
+
+
 # Deployment
 
 Ensure that you [aws configure](https://docs.aws.amazon.com/cli/v1/userguide/cli-chap-configure.html) with credentials that have the neccesary access policy. 
