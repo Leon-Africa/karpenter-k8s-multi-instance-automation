@@ -2,6 +2,8 @@
 
 🚧 Work in Progress (WIP) 🚧
 
+# Technical Specification
+
 - terraform
 - [ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installationhtml#installing-and-upgrading-ansible-with-pip) (install using pip)
 - [helm](https://helm.sh/)
