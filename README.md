@@ -4,6 +4,10 @@
 
 # Technical Specification
 
+https://github.com/user-attachments/assets/800522b5-9aeb-427a-9667-3dbebad9209f
+
+# Dependancies
+
 - terraform
 - [ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installationhtml#installing-and-upgrading-ansible-with-pip) (install using pip)
 - [helm](https://helm.sh/)
