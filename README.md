@@ -8,7 +8,7 @@ https://github.com/user-attachments/assets/800522b5-9aeb-427a-9667-3dbebad9209f
 
 # Dependancies
 
-- terraform
+- [terraform](https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli)
 - [ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installationhtml#installing-and-upgrading-ansible-with-pip) (install using pip)
 - [helm](https://helm.sh/)
 - [aws-cli](https://docs.aws.amazon.com/streams/latest/dev/setup-awscli.html)
